@@ -1,0 +1,19 @@
+# Compiled python modules.
+*.pyc
+
+# python environment
+pyenv
+
+# Setuptools distribution folder.
+/dist/
+
+# Python egg metadata, regenerated from source files by setuptools.
+/*.egg-info
+
+# dependencies submodule libraries
+pybitcointools
+pycrypto
+python-gnupg
+python-mnemonic
+python-pbkdf2
+.eggs
