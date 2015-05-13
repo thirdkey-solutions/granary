@@ -1,5 +1,5 @@
 import seedlib
-import pybitcointools as bitcoin
+import bitcoin
 import getpass
 import json
 

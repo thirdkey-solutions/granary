@@ -43,13 +43,12 @@ setup(
     },
     
     install_requires=[
-        'pybitcointools',
+        'bitcoin',
         'mnemonic',
         'pbkdf2',
         'python-gnupg',
-        'readline',
         'cmd2',
-        'pycrypto==2.6.1',
+        'pycrypto',
     ],
     tests_require=[
         'mock',

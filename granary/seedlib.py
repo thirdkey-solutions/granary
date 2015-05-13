@@ -10,7 +10,7 @@ import hashlib
 from pbkdf2 import PBKDF2
 import gnupg
 
-import pybitcointools as bitcoin
+import bitcoin
 from mnemonic import Mnemonic
 from Crypto.Cipher import Blowfish
 

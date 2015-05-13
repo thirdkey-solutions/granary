@@ -2,7 +2,7 @@
 from cmd2 import Cmd
 from seed import Seed
 import seedlib
-import pybitcointools as bitcoin
+import bitcoin
 import interactive
 from binascii import hexlify, unhexlify
 import glob, os
