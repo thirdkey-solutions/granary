@@ -13,6 +13,7 @@ class Seed():
     def __init__(self):
         self._bin_seed = None
         self._fingerprint = None
+        self._bip32_xpriv = None
         
     def __nonzero__(self):
         return bool(self._bin_seed)

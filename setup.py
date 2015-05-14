@@ -8,7 +8,7 @@ from setuptools.command.test import test as TestCommand
 class PyTest(TestCommand):
     def finalize_options(self):
         TestCommand.finalize_options(self)
-        self.test_args = ["granary/test"]
+        self.test_args = ["-v", "granary/test"]
 
     def run_tests(self):
         import pytest

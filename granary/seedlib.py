@@ -24,7 +24,7 @@ gpg = gnupg.GPG()
 
 PBKDF2_ROUNDS = 200000
 
-gpg_recipients = ["4D39C707","885C379E", "0CA0F405"]
+gpg_recipients = ["4D39C707","885C379E"]
 
 # 2 of 5
 quorum_shares = 2
@@ -33,34 +33,9 @@ total_shares = 5
 master_filename_template = "master_%s_.txt"
 regex_master_filename_fingerprint = re.compile(r"master_(?P<fingerprint>[0-9A-Z]+)_\.txt")
 
-seed_filename_template = "customer_key_%s_.txt"
-regex_seed_filename_fingerprint = re.compile(r"customer_key_(?P<fingerprint>[0-9A-Z]+)_\.txt")
+seed_filename_template = "seed_%s_.txt"
+regex_seed_filename_fingerprint = re.compile(r"seed_(?P<fingerprint>[0-9A-Z]+)_\.txt")
 
-
-master_key_template = """
-=============================
-TKS Master
-
-Fingerprint: %(fingerprint)s
-
-%(pgp)s
-=============================
-"""
-
-customer_key_template = """
-=============================
-Fingerprint: %(fingerprint)s
-
-Encrypted Seed: %(words)s
-
-xpub (M/0\'): %(xpubM0H)s
-
-=============================
-"""
-
-regex_customer_fingerprint = re.compile(r"Fingerprint:.(?P<fingerprint>[0-9A-Z]+)")
-regex_customer_seed = re.compile(r"Seed:.(?P<seed>[\w ]+)")
-regex_customer_xpub = re.compile(r"xpub[^:]+:.(?P<xpub>[0-9A-Za-z]+)")
 
 def mnemonic_encode(binary_key):
     return mnemonic.to_mnemonic(binary_key)
@@ -145,8 +120,8 @@ def gpg_matching_keys(recipient):
     matching_keys = list(set(private_key_ids).intersection(set(gpg_recipients)))
     return matching_keys
     
-def gpg_decrypt_master(fingerprint):
-    master_key_filename = master_filename_template % fingerprint
+def gpg_decrypt_master(expected_fingerprint):
+    master_key_filename = master_filename_template % expected_fingerprint
     if os.path.isfile(master_key_filename):
         logging.info('Found gpg encrypted master key')
     else:
@@ -160,11 +135,11 @@ def gpg_decrypt_master(fingerprint):
         logging.info("Found matching GPG private key %s", recipient)
         gpg_passphrase = getpass.getpass("Enter the GPG key passphrase: ")
         decrypted_hex_key = str(gpg.decrypt(gpg_data, passphrase=gpg_passphrase))
-        if fingerprint(unhexlify(decrypted_hex_key)) == fingerprint:
+        if fingerprint(unhexlify(decrypted_hex_key)) == expected_fingerprint:
             logging.info("Master key decrypted successfully")
             return decrypted_hex_key
         else:
-            logging.info("Failed to decrypt key, trying next GPG key")
+            logging.info("Decrypted key didn't match expected fingerprint, trying next GPG key")
     raise Exception("GPG master key decryption failed for all recipients")
         
         
