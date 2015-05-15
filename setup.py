@@ -20,6 +20,7 @@ setup(
     version = '0.5',
     packages=[
         'granary',
+        'granary.test'
     ],
     license='http://opensource.org/licenses/MIT',
     author='Andreas M. Antonopoulos',
