@@ -17,7 +17,7 @@ class PyTest(TestCommand):
 
 setup(
     name='granary',
-    version = '0.5',
+    version = '0.6',
     packages=[
         'granary',
         'granary.test'
@@ -39,7 +39,7 @@ setup(
     cmdclass={'test': PyTest},
     entry_points={
         'console_scripts': [
-            'granary-shell=granary.shell:main',
+            'granary=granary.shell:main',
         ],
     },
     
