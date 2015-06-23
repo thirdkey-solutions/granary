@@ -311,7 +311,51 @@ class SeedShell(Cmd):
         
     def help_show_seed_xpub(self):
         print "Derive and display the M/0' xpub key from the seed"
-
+        
+    def do_cosign_bitoasis(self, args):
+        if not self.seed:
+            raise Exception("cosign: Load or generate a seed first")
+        
+        if args and len(args.split()) > 1:
+            filename = args.split()[0]
+            path = args.split()[1]
+        else:
+            filename = args
+        
+        if not filename or not os.path.isfile(filename): 
+            raise Exception("cosign: requires a filename")    
+        
+        master_xpriv = self.seed.as_HD_root()
+        
+        
+        if path:
+            path = [2**31 + int(child[:-1]) if child[-1:] in "hp'HP" else int(child) for child in path.split('/')]
+            master_xpriv = bitcoin.bip32_descend(master_xpriv, path)
+            print "Path: ", path
+        
+        import multisigrecovery.commands
+        from multisigrecovery.commands import ScriptInputError
+        
+        class Arguments(object): pass
+        args = Arguments()
+        args.private = master_xpriv
+        args.load = filename
+        args.save = filename + '.signed'
+        
+        multisigrecovery.commands.cosign(args)
+        
+    def help_cosign_bitoasis(self):
+        print "cosign_bitoasis FILENAME [KEYPATH]"
+        print "Sign a transaction recovery package contained in FILENAME, using the BIP32 KEYPATH private key derived from seed"
+        
+        
+    def complete_cosign_bitoasis(self, text, line, begidx, endidx):
+        files = glob.glob("*")
+        if not text:
+            return files
+        else: 
+            return [f for f in files if f.startswith(text)]
+        
 
     
     
