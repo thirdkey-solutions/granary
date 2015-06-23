@@ -64,8 +64,8 @@ def mnemonic_decode(mnemonic_code):
 def random_key():
     entropy = ""
     # collect sources of entropy
-    #entropy = getpass.getpass("Enter entropy from source 1: ")
-    #entropy += getpass.getpass("Enter entropy from source 2: ")
+    entropy = getpass.getpass("Enter entropy from source 1: ")
+    entropy += getpass.getpass("Enter entropy from source 2: ")
     entropy += str(os.urandom(32))
     entropy += str(random.randrange(2**256))
     entropy += str(int(time.time() * 1000000))

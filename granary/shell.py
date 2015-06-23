@@ -330,8 +330,8 @@ class SeedShell(Cmd):
         
         if path:
             path = [2**31 + int(child[:-1]) if child[-1:] in "hp'HP" else int(child) for child in path.split('/')]
-            master_xpriv = bitcoin.bip32_descend(master_xpriv, path)
-            print "Path: ", path
+            for p in path:
+                master_xpriv = bitcoin.bip32_ckd(master_xpriv, p)
         
         import multisigrecovery.commands
         from multisigrecovery.commands import ScriptInputError
