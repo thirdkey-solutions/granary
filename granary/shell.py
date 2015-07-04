@@ -300,17 +300,24 @@ class SeedShell(Cmd):
     def do_show_seed_xpub(self, args):
         if not self.seed:
             raise Exception("show seed xpub: Load or generate a seed first")
-        
+            
         master_xpriv = self.seed.as_HD_root()
+        
+        if args:
+            path = [2**31 + int(child[:-1]) if child[-1:] in "hp'HP" else int(child) for child in args.split('/')]
+            for p in path:
+                master_xpriv = bitcoin.bip32_ckd(master_xpriv, p)
+            
         master_xpub = bitcoin.bip32_privtopub(master_xpriv)
-        # Child key m/0'
-        xpriv_0H = bitcoin.bip32_ckd(master_xpriv, 2**31)
-        xpub_0H = bitcoin.bip32_privtopub(xpriv_0H)
-        print "xpub M/0':", xpub_0H
+        
+        print "Path %s :" % args if args else "Root key"
+        print "public %s" % master_xpub
+        print "private %s" % master_xpriv
         
         
     def help_show_seed_xpub(self):
-        print "Derive and display the M/0' xpub key from the seed"
+        print "show_seed_xpub [PATH]"
+        print "Derive a BIP32 extended key for PATH and display the xpub/xpriv"
         
     def do_cosign_bitoasis(self, args):
         if not self.seed:
