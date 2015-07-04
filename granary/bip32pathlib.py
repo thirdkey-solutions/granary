@@ -12,7 +12,7 @@ class BIP32Path(object):
         return '/'.join([str(child - 2**31) + "'" if child >= 2**31 else str(child) for child in self._path])
         
     def from_hex(self, hex_serialized):
-        self._path = [long(unhexlify(hex_serialized[i:i+8])) for i in range(0, len(hex_serialized), 8)]
+        self._path = [int(hex_serialized[i:i+8], 16) for i in range(0, len(hex_serialized), 8)]
         
     def to_hex(self):
         return ''.join(["%08x" % child for child in self._path])
