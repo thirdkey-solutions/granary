@@ -127,14 +127,17 @@ def gpg_decrypt_master(expected_fingerprint):
     else:
         raise Exception("GPG encrypted master key file not found")
     master_key_file = open(master_key_filename, "r")
-    gpg_data = master_key_file.read()
+    import json
+    gpg_data = json.load(master_key_file)
+    assert 'pgp' in gpg_data
+    gpg_payload = gpg_data['pgp']
     matching_keys = gpg_matching_keys(gpg_recipients)
     if not matching_keys:
         raise Exception("No suitable GPG private keys found for decryption of Master key")
     for recipient in matching_keys:
         logging.info("Found matching GPG private key %s", recipient)
         gpg_passphrase = getpass.getpass("Enter the GPG key passphrase: ")
-        decrypted_hex_key = str(gpg.decrypt(gpg_data, passphrase=gpg_passphrase))
+        decrypted_hex_key = str(gpg.decrypt(gpg_payload, passphrase=gpg_passphrase))
         if fingerprint(unhexlify(decrypted_hex_key)) == expected_fingerprint:
             logging.info("Master key decrypted successfully")
             return decrypted_hex_key

@@ -17,7 +17,7 @@ class PyTest(TestCommand):
 
 setup(
     name='granary',
-    version = '0.8.1',
+    version = '0.9',
     packages=[
         'granary',
         'granary.test'
