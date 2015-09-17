@@ -17,7 +17,7 @@ class PyTest(TestCommand):
 
 setup(
     name='granary',
-    version = '0.7',
+    version = '0.8',
     packages=[
         'granary',
         'granary.test'
@@ -42,7 +42,7 @@ setup(
             'granary=granary.shell:main',
         ],
     },
-    
+
     install_requires=[
         'bitcoin',
         'mnemonic',
