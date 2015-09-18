@@ -318,7 +318,6 @@ class SeedShell(Cmd):
 
         print "Path %s :" % args if args else "Root key"
         print "public %s" % master_xpub
-        print "private %s" % master_xpriv
 
 
     def help_show_seed_xpub(self):
