@@ -59,37 +59,47 @@ def mnemonic_decode(mnemonic_code):
         return nd
     else:
         raise Exception("Mnemonic sentence does not match checksum")
-        
-    
+
+
 def random_key():
     entropy = ""
-    # collect sources of entropy
-    entropy = getpass.getpass("Enter entropy from source 1: ")
-    entropy += getpass.getpass("Enter entropy from source 2: ")
+    # add local sources of entropy
     entropy += str(os.urandom(32))
     entropy += str(random.randrange(2**256))
     entropy += str(int(time.time() * 1000000))
-    return hashlib.sha256(entropy).digest()  
-    
+
+    # add external entropy
+    i = 1
+    additional_entropy = getpass.getpass("Enter entropy from source %d " % i)
+    while additional_entropy:
+        entropy += additional_entropy
+        i += 1
+        additional_entropy = getpass.getpass("Enter entropy from source %d " % i)
+
+    # stretch entropy to defend (somewhat) against brute force of weak sources
+    print "Stretching entropy..."
+    key = stretched_key(entropy, str(time.time()))
+    return key
+
 
 def fingerprint(binary_key):
     return hashlib.sha256(binary_key).hexdigest()[-6:].upper()
-    
-    
+
+
 def split(binary_key):
     shares = ssss_wrapper.ssss_split(binary_key)
     mnemonic_share_list = []
     for share in shares:
         mnemonic_share = mnemonic.to_mnemonic(share)
-        mnemonic_share_list.append(mnemonic_share)            
+        mnemonic_share_list.append(mnemonic_share)
     assert(len(mnemonic_share_list) == total_shares)
     return mnemonic_share_list
-    
+
 
 def stretched_key(master_key, passphrase):
      return PBKDF2(master_key, passphrase, iterations=PBKDF2_ROUNDS).read(32)
-       
-       
+
+
 def encrypt(plaintext, key):
     crypto = Blowfish.new(key, Blowfish.MODE_ECB)
     ciphertext = crypto.encrypt(plaintext)
@@ -98,28 +108,28 @@ def encrypt(plaintext, key):
     assert (recovered_plaintext == plaintext)
     assert (fprint == fingerprint(recovered_plaintext))
     return ciphertext
- 
-   
+
+
 def decrypt(ciphertext, expected_fingerprint, key):
     crypto = Blowfish.new(key, Blowfish.MODE_ECB)
     plaintext = crypto.decrypt(ciphertext)
     assert(fingerprint(plaintext) == expected_fingerprint)
     return plaintext
-        
-        
+
+
 def decode_seed(encrypted_mnemonic, expected_fingerprint, master_crypto_key):
     decoded_mnemonic = mnemonic_decode(encrypted_mnemonic)
     decrypted_seed = decrypt(decoded_mnemonic, expected_fingerprint, master_crypto_key)
     assert(fingerprint(decrypted_seed) == expected_fingerprint)
     return decrypted_seed
-    
-    
+
+
 def gpg_matching_keys(recipient):
     private_keys = gpg.list_keys(True)
     private_key_ids =[ key_dict['keyid'][-8:] for key_dict in private_keys]
     matching_keys = list(set(private_key_ids).intersection(set(gpg_recipients)))
     return matching_keys
-    
+
 def gpg_decrypt_master(expected_fingerprint):
     master_key_filename = master_filename_template % expected_fingerprint
     if os.path.isfile(master_key_filename):
