@@ -140,16 +140,13 @@ def gpg_decrypt_master(expected_fingerprint):
         decrypted_hex_key = str(gpg.decrypt(gpg_payload, passphrase=gpg_passphrase))
         if fingerprint(unhexlify(decrypted_hex_key)) == expected_fingerprint:
             logging.info("Master key decrypted successfully")
-            return decrypted_hex_key
+            return unhexlify(decrypted_hex_key)
         else:
             logging.info("Decrypted key didn't match expected fingerprint, trying next GPG key")
     raise Exception("GPG master key decryption failed for all recipients")
-        
-        
+
+
 def gpg_encrypt_master(hex_key):
     gpg = gnupg.GPG()
     gpg.encoding = 'utf-8'
     return gpg.encrypt(hex_key, gpg_recipients)
-
-
-    
