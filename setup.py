@@ -3,6 +3,7 @@
 from setuptools import setup
 import sys
 from setuptools.command.test import test as TestCommand
+from granary import __version__
 
 
 class PyTest(TestCommand):
@@ -17,7 +18,7 @@ class PyTest(TestCommand):
 
 setup(
     name='granary',
-    version = '0.9',
+    version = __version__,
     packages=[
         'granary',
         'granary.test'
