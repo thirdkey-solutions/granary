@@ -369,8 +369,64 @@ class SeedShell(Cmd):
         else:
             return [f for f in files if f.startswith(text)]
 
+    def do_validate(self, args):
+        if args and len(args.split()) > 1:
+            filename = args.split()[0]
+            insight = args.split()[1]
+        else:
+            filename = args
+            insight = None
+
+        if not filename or not os.path.isfile(filename):
+            raise Exception("validate: requires a filename")
+
+        import multisigrecovery.commands
+        from multisigrecovery.commands import ScriptInputError
+
+        class Arguments(object): pass
+        args = Arguments()
+        args.insight = insight if insight else "http://127.0.0.1:3000"
+        args.load = filename
+
+        multisigrecovery.commands.validate(args)
+
+    def help_validate(self):
+        print "validate FILENAME [INSIGHT_URL]"
+        print "Validate a transaction recovery package contained in FILENAME, using the optional INSIGHT_URL Insight server for lookups"
 
 
+    def complete_validate(self, text, line, begidx, endidx):
+        files = glob.glob("*")
+        if not text:
+            return files
+        else:
+            return [f for f in files if f.startswith(text)]
+
+    def do_normalize(self, args):
+        if args and len(args.split()) > 1:
+            infile = args.split()[0]
+            outfile = args.split()[1]
+        else:
+            infile = args
+            outfile = infile+"-norm"
+
+        if not infile or not os.path.isfile(infile):
+            raise Exception("normalize: requires a filename")
+
+        from normalize_recovery import normalize
+        normalize(infile, outfile)
+
+
+    def help_normalize(self):
+        print "normalize INFILE [OUTFILE]"
+        print "Normalize a transaction recovery package contained in INFILE and save the normalized result in OUTFILE (or INFILE-norm if no OUTFILE provided)"
+
+    def complete_normalize(self, text, line, begidx, endidx):
+        files = glob.glob("*")
+        if not text:
+            return files
+        else:
+            return [f for f in files if f.startswith(text)]
 
 def main():
     cmdshell = SeedShell()
