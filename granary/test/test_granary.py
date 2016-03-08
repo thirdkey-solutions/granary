@@ -88,7 +88,7 @@ def test_bip39_mnemonic_decode_exception_checksum():
 def test_electrumv1_mnemonic_encode():
     mnemonic = electrum_v1_mnemonic.mn_encode(SEED1_HEX[:32])
     print mnemonic
-    assert mnemonic == ""
+    assert mnemonic == ['grief', 'moonlight', 'utter', 'grant', 'enemy', 'unseen', 'upon', 'inch', 'motion', 'connection', 'explain', 'evening']
 
 def test_ssss_combine_unindexed_exception():
     if not ssss_wrapper.ssss_installed():
@@ -199,6 +199,16 @@ def test_seed_BIP39_testvector():
     seed1.from_hex("3e141609b97933b66a060dcddc71fad1d91677db872031e85f4c015c5e7e8982")
     assert seed1.as_HD_root() == "xprv9s21ZrQH143K31xupMrCAi6gmQxGTZkY1W9TFaXLVenbdZ84jaYU82Gz7SkjgpV9oidDnYJu1W9SZ3nH35b6eeQirsi2dNmH37d215jjp9s"
 
-
+def test_bip32_child():
+    assert seedlib.bip32_child(SEED1_HD_ROOT, "0") == "xprv9uCvEJUAjfus2cWARqMRrbfrh6MZABFh8QNQ8RFHHKEeM5KXLWAyhS5xkGuyKooTNLGfdEdoxkDvtmjejbqcXU3LasEXNfW5GKxjcGLRkTC"
+    assert seedlib.bip32_child(SEED1_HD_ROOT, "0'") == "xprv9uCvEJUK5LSqCFcMSES9umMNgtmezmUKFTFS7Sby2U1moXCmBtASNbhi6qJwivsos2zb6EgD1Gkou4y2nq9LXW25ySgGifLJ5soLBLA6Dqn"
+    assert seedlib.bip32_child(SEED1_HD_ROOT, "0'/0") == "xprv9xPSmhRkqkW9Rchsj9nECbVHfAT84D7grszuSzG4HpSwXm2SZ5VvPp5QRqErhLReWBgTMJ9CUvB1t3Up7RfmXFTaiRyYCZhGRF3LANEjrVH"
+    assert seedlib.bip32_child(SEED1_HD_ROOT, "44'/0'/0'/0/0") == "xprvA3hjLRaHBoxnpEPzZ1CEA83PFDd6FzVKtH96QGqBU5nCAU5yvovnUyk61kUpNw4U6x4rXTh7JUcRA4zxun4W8Ncbpu7X5UPd8cszNxjarAd"
+    assert seedlib.bip32_child(SEED1_HD_ROOT, "44'/0'/0'/0/0") == seedlib.bip32_child(SEED1_HD_ROOT, "44H/0p/0'/0/0")
+    try:
+        k = seedlib.bip32_child(SEED1_HD_ROOT, "")
+    except ValueError:
+        pass
+    
 if __name__ == '__main__':
     pytest.main('-v')

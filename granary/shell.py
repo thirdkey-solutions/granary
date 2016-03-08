@@ -303,26 +303,31 @@ class SeedShell(Cmd):
             return [f for f in files if f.startswith(text)]
 
 
-    def do_show_seed_xpub(self, args):
+    def do_show_seed(self, args):
         if not self.seed:
             raise Exception("show seed xpub: Load or generate a seed first")
-
+        
         master_xpriv = self.seed.as_HD_root()
+        master_xpub = bitcoin.bip32_privtopub(master_xpriv)
+        encrypted_customer_seed = seedlib.encrypt(self.seed.bin_seed(), self.stretched_master.bin_seed())
+        encrypted_mnemonic = seedlib.mnemonic.to_mnemonic(encrypted_customer_seed)
+        
+        print "Seed fingerprint     :", self.seed.fingerprint()
+        print "Seed mnemonic        :", seedlib.mnemonic.to_mnemonic(self.seed.bin_seed())
+        print "Encrypted mnemonic   :", encrypted_mnemonic
+        print "Master xpub          :", master_xpub
+        print "0H xpub              :", bitcoin.bip32_privtopub(seedlib.bip32_child(master_xpriv, "0H"))
+        print "0H/0 xpub            :", bitcoin.bip32_privtopub(seedlib.bip32_child(master_xpriv, "0H/0"))
+        print "44H/0H/0H/0/0 xpub   :", bitcoin.bip32_privtopub(seedlib.bip32_child(master_xpriv, "44H/0H/0H/0/0"))
 
         if args:
-            path = [2**31 + int(child[:-1]) if child[-1:] in "hp'HP" else int(child) for child in args.split('/')]
-            for p in path:
-                master_xpriv = bitcoin.bip32_ckd(master_xpriv, p)
-
-        master_xpub = bitcoin.bip32_privtopub(master_xpriv)
-
-        print "Path %s :" % args if args else "Root key"
-        print "public %s" % master_xpub
+            print "{0} xpub              : {1}".format(args,bitcoin.bip32_privtopub(seedlib.bip32_child(master_xpriv, args)))
 
 
-    def help_show_seed_xpub(self):
-        print "show_seed_xpub [PATH]"
-        print "Derive a BIP32 extended key for PATH and display the xpub/xpriv"
+    def help_show_seed(self):
+        print "show_seed [PATH]"
+        print "Show seed as unencrypted BIP39 mnemonic and standard path xpubs (including optional PATH xpub)"
+        
 
     def do_cosign(self, args):
         if not self.seed:

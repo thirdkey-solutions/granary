@@ -160,3 +160,11 @@ def gpg_encrypt_master(hex_key):
     gpg = gnupg.GPG()
     gpg.encoding = 'utf-8'
     return gpg.encrypt(hex_key, gpg_recipients)
+    
+    
+def bip32_child(key, path):
+    path = [2**31 + int(child[:-1]) if child[-1:] in "hp'HP" else int(child) for child in path.split('/')]
+    for p in path:
+        key = bitcoin.bip32_ckd(key, p)
+    return key
+
