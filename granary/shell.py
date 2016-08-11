@@ -8,6 +8,8 @@ import getpass
 import bitcoin
 
 import seedlib
+import recovery
+
 from seed import Seed
 import ssss_wrapper
 from . import __version__
@@ -46,8 +48,14 @@ class SeedShell(Cmd):
     intro = version_string + intro
 
     doc_header = version_string + "Documented commands (type help <topic>):"
-
-
+        
+    def __init__(self):
+        Cmd.__init__(self)
+        self.master = Seed()
+        self.stretched_master = Seed()
+        self.seed = Seed()
+        self.recovery_package = None
+        
     def do_reset_seeds(self):
         self.master = Seed()
         self.stretched_master = Seed()
@@ -57,7 +65,6 @@ class SeedShell(Cmd):
 
     def help_reset_seeds(self):
         print "Reset all stored seeds"
-
 
     def update_prompt(self):
         prompt = "granary-v%s " % __version__
@@ -328,109 +335,62 @@ class SeedShell(Cmd):
         print "show_seed [PATH]"
         print "Show seed as unencrypted BIP39 mnemonic and standard path xpubs (including optional PATH xpub)"
         
+    def do_load_recovery(self, filename):
+        if not filename or not os.path.isfile(filename):
+            raise Exception("load_recovery requires a filename")
+        self.recovery_package = recovery.load(filename)
+        
+    def complete_load_recovery(self, text, line, begidx, endidx):
+        files = glob.glob("*")
+        if not text:
+            return files
+        else:
+            return [f for f in files if f.startswith(text)]
+        
 
     def do_cosign(self, args):
         if not self.seed:
             raise Exception("cosign: Load or generate a seed first")
 
-        if args and len(args.split()) > 1:
-            filename = args.split()[0]
-            path = args.split()[1]
-        else:
-            filename = args
-
-        if not filename or not os.path.isfile(filename):
-            raise Exception("cosign: requires a filename")
+        if not self.recovery_package:
+            raise Exception("cosign: Load a recovery package first (load_recovery)")
+            
+        path = None
+        if args and len(args.split()) > 0:
+            path = args.split()[0]
 
         master_xpriv = self.seed.as_HD_root()
-
 
         if path:
             path = [2**31 + int(child[:-1]) if child[-1:] in "hp'HP" else int(child) for child in path.split('/')]
             for p in path:
                 master_xpriv = bitcoin.bip32_ckd(master_xpriv, p)
-
-        import multisigrecovery.commands
-        from multisigrecovery.commands import ScriptInputError
-
-        class Arguments(object): pass
-        args = Arguments()
-        args.private = master_xpriv
-        args.load = filename
-        args.save = filename + '.signed'
-
-        multisigrecovery.commands.cosign(args)
+                
+        recovery.cosign(master_xpriv, self.recovery_package)
 
     def help_cosign(self):
-        print "cosign FILENAME [KEYPATH]"
-        print "Sign a transaction recovery package contained in FILENAME, using the BIP32 KEYPATH private key derived from seed"
+        print "cosign [KEYPATH]"
+        print "Sign a transaction recovery package using the BIP32 KEYPATH private key derived from seed"
 
-
-    def complete_cosign(self, text, line, begidx, endidx):
-        files = glob.glob("*")
-        if not text:
-            return files
-        else:
-            return [f for f in files if f.startswith(text)]
 
     def do_validate(self, args):
-        if args and len(args.split()) > 1:
-            filename = args.split()[0]
-            insight = args.split()[1]
-        else:
-            filename = args
-            insight = None
-
-        if not filename or not os.path.isfile(filename):
-            raise Exception("validate: requires a filename")
-
-        import multisigrecovery.commands
-        from multisigrecovery.commands import ScriptInputError
-
-        class Arguments(object): pass
-        args = Arguments()
-        args.insight = insight if insight else "http://127.0.0.1:3000"
-        args.load = filename
-
-        multisigrecovery.commands.validate(args)
+        if not self.recovery_package:
+            raise Exception("validate: Load a recovery package first (load_recovery)")
+        recovery.validate(self.recovery_package)
 
     def help_validate(self):
-        print "validate FILENAME [INSIGHT_URL]"
-        print "Validate a transaction recovery package contained in FILENAME, using the optional INSIGHT_URL Insight server for lookups"
-
-
-    def complete_validate(self, text, line, begidx, endidx):
-        files = glob.glob("*")
-        if not text:
-            return files
-        else:
-            return [f for f in files if f.startswith(text)]
+        print "validate"
+        print "Validate a transaction recovery package"
 
     def do_normalize(self, args):
-        if args and len(args.split()) > 1:
-            infile = args.split()[0]
-            outfile = args.split()[1]
-        else:
-            infile = args
-            outfile = infile+"-norm"
-
-        if not infile or not os.path.isfile(infile):
-            raise Exception("normalize: requires a filename")
-
-        from normalize_recovery import normalize
-        normalize(infile, outfile)
-
+        if not self.recovery_package:
+            raise Exception("normalize: Load a recovery package first (load_recovery)")
+        r = recovery.normalize(self.recovery_package)
+        self.recovery_package = r
 
     def help_normalize(self):
-        print "normalize INFILE [OUTFILE]"
-        print "Normalize a transaction recovery package contained in INFILE and save the normalized result in OUTFILE (or INFILE-norm if no OUTFILE provided)"
-
-    def complete_normalize(self, text, line, begidx, endidx):
-        files = glob.glob("*")
-        if not text:
-            return files
-        else:
-            return [f for f in files if f.startswith(text)]
+        print "normalize"
+        print "Normalize a transaction recovery package"
 
 def main():
     cmdshell = SeedShell()

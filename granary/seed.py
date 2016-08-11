@@ -2,8 +2,8 @@ import seedlib
 import string
 import json
 from mnemonic import Mnemonic
-import bitcoin
 from binascii import hexlify, unhexlify
+import bitcoin
 
 # class Granary():
 #     pass

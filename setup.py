@@ -53,7 +53,6 @@ setup(
         'pycrypto',
     ],
     tests_require=[
-        'mock',
         'pytest',
     ],
     test_suite='granary.test',

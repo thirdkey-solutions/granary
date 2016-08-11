@@ -4,7 +4,7 @@
 
 import sys
 import pytest
-import mock
+import bitcoin
 import logging
 import itertools
 from binascii import hexlify, unhexlify
