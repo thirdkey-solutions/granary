@@ -3,19 +3,28 @@ import os
 import json
 import bitcoin
 import multisig
+import seedlib
 from binascii import hexlify, unhexlify
 from bip32pathlib import BIP32Path
 
 def value_print(satoshi):
     return("%12d satoshi (%2.4f BTC)" % (satoshi, satoshi/float(10**8)))
     
-def load(filename):
+def load_recovery(filename):
     if os.path.isfile(filename):
         in_f = open(filename, 'r')
         recovery_package = json.load(in_f)
         return recovery_package
     else:
-        raise Exception("Can't load recovery file %s" % fname)
+        raise Exception("Can't load recovery file %s" % filename)
+        
+def save_recovery(recovery_package, filename):
+    if not os.path.isfile(filename):
+        out_f = open(filename, 'w')
+        json.dump(recovery_package, out_f, indent=2)
+        out_f.close()
+    else:
+        raise Exception("Recovery file %s already exists" % filename)
 
 def normalize(recovery_package):
     # normalize
@@ -49,6 +58,7 @@ def normalize(recovery_package):
     return recovery_package
     
 def validate(recovery_package):
+    package_out = 0
     total_out = 0
     total_in = 0
     total_fee = 0
@@ -96,13 +106,39 @@ def validate(recovery_package):
                 print "WARNING - Unusually large fee", value_print(total_fee)
             if total_fee > (total_out / 100):
                 raise Exception("ERROR - Fee exceeds 1% of Tx" + value_print(total_fee))
+        
+    # check total outputs match expected amount
+    print "Total outputs for all transactions", value_print(total_out)
+    if total_out == recovery_package['header']['total_out']:
+        print "Total outputs for all transactions match the recovery package header"
+    else:
+        raise Exception("Total outputs for all transactions do not match the recovery package header")
                 
-def cosign(xpriv, recovery_package):
+def cosign(master_xpriv, recovery_package):
     raw_txs = recovery_package['txs']
     print "Signing %d transactions" % len(raw_txs)
     for tx_index, tx_raw in enumerate(raw_txs):
         print "\nTransaction #", tx_index
-        tx = bitcoin.transaction.deserialize(unhexlify(tx_raw['bytes']))
-        for inp in tx['ins']:
+        hex_tx = tx_raw['bytes']
+        tx = bitcoin.transaction.deserialize(unhexlify(hex_tx))
+        keypaths = tx_raw['input_paths']
+        keypairs = {}
+        for p in keypaths:
+            xpriv = seedlib.bip32_child(master_xpriv, p)
+            priv = bitcoin.bip32_extract_key(xpriv)
+            pub = bitcoin.privtopub(priv)
+            keypairs[pub] = priv
+        for i, inp in enumerate(tx['ins']):
             (sigs, pubkeys, redeemScript, M, N) = multisig.decode_multisig_script(inp['script'])
-            
+            for p in pubkeys:
+                if p in keypairs:
+                    sig_new = bitcoin.multisign(hex_tx, i, redeemScript, keypairs[p])
+                    sigs.append(sig_new)
+                    tx_new = bitcoin.apply_multisignatures(unhexlify(hex_tx), i, redeemScript, sigs)
+                    print "Signed transaction %d input %d" % (tx_index, i)
+        
+                    # replace tx with newly signed transaction
+                    hex_tx = hexlify(tx_new)
+        recovery_package['txs'][tx_index]['bytes'] = hex_tx
+    return recovery_package
+

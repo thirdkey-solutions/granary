@@ -25,8 +25,7 @@ def decode_multisig_script(script):
         sigs.append(hexlify(sig))
     return (sigs, pubkeys, redeemScript, M, N)
     
-def sign_multisig():
-    pass
+    
     
     
     

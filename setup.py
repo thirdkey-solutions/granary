@@ -45,12 +45,12 @@ setup(
     },
 
     install_requires=[
-        'bitcoin',
-        'mnemonic',
-        'pbkdf2',
-        'python-gnupg',
-        'cmd2',
-        'pycrypto',
+        'bitcoin==1.1.42',
+        'mnemonic==0.15',
+        'pbkdf2==1.3',
+        'python-gnupg==0.3.8',
+        'cmd2==0.6.8',
+        'pycrypto==2.6.1',
     ],
     tests_require=[
         'pytest',

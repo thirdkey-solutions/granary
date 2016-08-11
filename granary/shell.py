@@ -338,7 +338,7 @@ class SeedShell(Cmd):
     def do_load_recovery(self, filename):
         if not filename or not os.path.isfile(filename):
             raise Exception("load_recovery requires a filename")
-        self.recovery_package = recovery.load(filename)
+        self.recovery_package = recovery.load_recovery(filename)
         
     def complete_load_recovery(self, text, line, begidx, endidx):
         files = glob.glob("*")
@@ -366,7 +366,7 @@ class SeedShell(Cmd):
             for p in path:
                 master_xpriv = bitcoin.bip32_ckd(master_xpriv, p)
                 
-        recovery.cosign(master_xpriv, self.recovery_package)
+        self.recovery_package = recovery.cosign(master_xpriv, self.recovery_package)
 
     def help_cosign(self):
         print "cosign [KEYPATH]"
@@ -391,6 +391,19 @@ class SeedShell(Cmd):
     def help_normalize(self):
         print "normalize"
         print "Normalize a transaction recovery package"
+        
+    def do_save_recovery(self, filename):
+        if not self.recovery_package:
+            raise Exception("save_recovery: Load a recovery package first (load_recovery)")
+        if not filename or os.path.isfile(filename):
+            raise Exception("save_recovery requires a filename and that file must not exist")
+        recovery.save_recovery(self.recovery_package, filename)
+        
+    def help_save_recovery(self):
+        print "save_recovery FILENAME"
+        print "Save a transaction recovery package to FILENAME, FILENAME must not already exist"
+        
+        
 
 def main():
     cmdshell = SeedShell()
