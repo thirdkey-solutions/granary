@@ -17,3 +17,4 @@ python-gnupg
 python-mnemonic
 python-pbkdf2
 .eggs
+build
