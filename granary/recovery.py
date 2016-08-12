@@ -83,22 +83,23 @@ def validate(recovery_package):
             except:
                 print "Exception in input retrieval - skipping online validation"
                 pass    
-
-        if tx_in > 0:
-            print "- Total in " + value_print(tx_in)
-            total_in += tx_in
+                
         for outp in tx['outs']:
             print "\tOutput paying " + value_print(outp['value']), "to", bitcoin.script_to_address(outp['script'])
             tx_out += outp['value']
+        print "\n-------------------------------"
+        if tx_in > 0:
+            print "- Total in " + value_print(tx_in)
+            total_in += tx_in
         print "- Total out" + value_print(tx_out)
         total_out += tx_out
-        tx_size = len(tx_raw['bytes'])/4
-        print "- Tx size", tx_size, "bytes"
         if total_in > 0:
-            tx_fee = total_in - total_out
+            tx_fee = tx_in - tx_out
             total_fee += tx_fee
             print "- Total fee" + value_print(tx_fee)
+            tx_size = len(tx_raw['bytes'])/4
             feePerByte = tx_fee / tx_size
+            print "- Tx size", tx_size, "bytes"
             print "- Fee per byte", feePerByte, "satoshi"
             if feePerByte > 100:
                 print "WARNING - Excessive fee per byte", feePerByte
@@ -108,9 +109,15 @@ def validate(recovery_package):
                 raise Exception("ERROR - Fee exceeds 1% of Tx" + value_print(total_fee))
         
     # check total outputs match expected amount
+    print "\n\n=================================================="
+    if total_in > 0:
+            print "Total inputs for all transactions", value_print(total_in)
     print "Total outputs for all transactions", value_print(total_out)
+    if total_in > 0:
+            print "Total fees for all transactions", value_print(total_fee)
+    
     if total_out == recovery_package['header']['total_out']:
-        print "Total outputs for all transactions match the recovery package header"
+        print "\n\nTotal outputs for all transactions match the recovery package header"
     else:
         raise Exception("Total outputs for all transactions do not match the recovery package header")
                 
