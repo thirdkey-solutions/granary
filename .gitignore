@@ -18,3 +18,7 @@ python-mnemonic
 python-pbkdf2
 .eggs
 build
+
+*.DS_Store
+
+\.python-version
