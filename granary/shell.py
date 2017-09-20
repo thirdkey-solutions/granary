@@ -12,6 +12,7 @@ import recovery
 
 from seed import Seed
 import ssss_wrapper
+
 from . import __version__
 
 
@@ -35,12 +36,12 @@ class SeedShell(Cmd):
             Command: stretch_master
 
         Step 3. Generate or load a seed for customer keys:
-            Commands: generate_seed, load_seed, save_seed, show_seed_xpub
+            Commands: generate_seed, load_seed, load_seed_mnemonic, save_seed, show_seed
 
         Use command "seeds" to see the fingerprints of all loaded seeds
 
         Or enter "help" for a list of commands, "help <command>" for a description of each command
-        eg. help seeds
+        eg. help show_seed
 
     """
 
@@ -48,14 +49,14 @@ class SeedShell(Cmd):
     intro = version_string + intro
 
     doc_header = version_string + "Documented commands (type help <topic>):"
-        
+
     def __init__(self):
         Cmd.__init__(self)
         self.master = Seed()
         self.stretched_master = Seed()
         self.seed = Seed()
         self.recovery_package = None
-        
+
     def do_reset_seeds(self):
         self.master = Seed()
         self.stretched_master = Seed()
@@ -273,6 +274,37 @@ class SeedShell(Cmd):
     def help_load_seed(self):
         print "Load an encrypted seed from a file and decrypt it with the stretched master key"
 
+    def do_load_seed_mnemonic(self, args):
+        if not self.master:
+            raise Exception("load_seed_mnemonic: Load the master seed first")
+        if not self.stretched_master:
+            raise Exception("load_seed_mnemonic: stretch a master seed first")
+        mnemonic_size = int(raw_input("How many mnemonic words (12, 18 or 24): "))
+        assert mnemonic_size in [12,18,24]
+        words = []
+        while (len(words) < mnemonic_size):
+            need = mnemonic_size - len(words)
+            try:
+                word_input = str(raw_input("Enter mnemonic word #"+str(len(words)+1)+", entire mnemonic, or Ctrl-C to exit: "))
+                for word in word_input.split():
+                    if word not in seedlib.mnemonic.wordlist:
+                        raise ValueError("word {0} not in mnemonic dictionary".format(word))
+                    words.append(word)
+            except KeyboardInterrupt:
+                raise
+            except Exception as e:
+                print e, "... try again"
+        mnemonic_phrase = str(" ").join(words)
+        seed = seedlib.mnemonic_decode(mnemonic_phrase)
+        fingerprint = seedlib.fingerprint(seed)
+        print "Loaded seed", fingerprint
+        self.seed.from_bin(seed)
+        self.update_prompt()
+        print "You can try the following commands now: seed, show_seed, save_seed"
+
+
+    def help_load_seed_mnemonic(self):
+        print "Load an unencrypted seed from a mnemonic phrase and encrypt it with the stretched master key"
 
     def do_save_seed(self, args):
         if not self.seed:
@@ -313,12 +345,12 @@ class SeedShell(Cmd):
     def do_show_seed(self, args):
         if not self.seed:
             raise Exception("show seed xpub: Load or generate a seed first")
-        
+
         master_xpriv = self.seed.as_HD_root()
         master_xpub = bitcoin.bip32_privtopub(master_xpriv)
         encrypted_customer_seed = seedlib.encrypt(self.seed.bin_seed(), self.stretched_master.bin_seed())
         encrypted_mnemonic = seedlib.mnemonic.to_mnemonic(encrypted_customer_seed)
-        
+
         print "Seed fingerprint     :", self.seed.fingerprint()
         print "Seed mnemonic        :", seedlib.mnemonic.to_mnemonic(self.seed.bin_seed())
         print "Encrypted mnemonic   :", encrypted_mnemonic
@@ -334,19 +366,19 @@ class SeedShell(Cmd):
     def help_show_seed(self):
         print "show_seed [PATH]"
         print "Show seed as unencrypted BIP39 mnemonic and standard path xpubs (including optional PATH xpub)"
-        
+
     def do_load_recovery(self, filename):
         if not filename or not os.path.isfile(filename):
             raise Exception("load_recovery requires a filename")
         self.recovery_package = recovery.load_recovery(filename)
-        
+
     def complete_load_recovery(self, text, line, begidx, endidx):
         files = glob.glob("*")
         if not text:
             return files
         else:
             return [f for f in files if f.startswith(text)]
-        
+
 
     def do_cosign(self, args):
         if not self.seed:
@@ -354,7 +386,7 @@ class SeedShell(Cmd):
 
         if not self.recovery_package:
             raise Exception("cosign: Load a recovery package first (load_recovery)")
-            
+
         path = None
         if args and len(args.split()) > 0:
             path = args.split()[0]
@@ -365,7 +397,7 @@ class SeedShell(Cmd):
             path = [2**31 + int(child[:-1]) if child[-1:] in "hp'HP" else int(child) for child in path.split('/')]
             for p in path:
                 master_xpriv = bitcoin.bip32_ckd(master_xpriv, p)
-                
+
         self.recovery_package = recovery.cosign(master_xpriv, self.recovery_package)
 
     def help_cosign(self):
@@ -391,19 +423,19 @@ class SeedShell(Cmd):
     def help_normalize(self):
         print "normalize"
         print "Normalize a transaction recovery package"
-        
+
     def do_save_recovery(self, filename):
         if not self.recovery_package:
             raise Exception("save_recovery: Load a recovery package first (load_recovery)")
         if not filename or os.path.isfile(filename):
             raise Exception("save_recovery requires a filename and that file must not exist")
         recovery.save_recovery(self.recovery_package, filename)
-        
+
     def help_save_recovery(self):
         print "save_recovery FILENAME"
         print "Save a transaction recovery package to FILENAME, FILENAME must not already exist"
-        
-        
+
+
 
 def main():
     cmdshell = SeedShell()
