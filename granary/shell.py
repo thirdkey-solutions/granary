@@ -118,7 +118,7 @@ class SeedShell(Cmd):
 
         if self.master:
             if raw_input("Overwrite existing master? (y/N): ") not in ["y","Y"]:
-                raise Exception("aborting load. Keeping existing master seed %s" % self.master_fingerprint)
+                raise Exception("aborting load. Keeping existing master seed %s" % self.master.fingerprint())
 
         m = seedlib.regex_master_filename_fingerprint.search(filename)
         expected_fingerprint = m.groupdict()['fingerprint']
@@ -146,7 +146,7 @@ class SeedShell(Cmd):
     def do_master_from_shares(self, args):
         if self.master:
             if raw_input("Overwrite existing master? (y/N): ") not in ["y","Y"]:
-                raise Exception("aborting load. Keeping existing master seed %s" % self.master_fingerprint)
+                raise Exception("aborting load. Keeping existing master seed %s" % self.master.fingerprint())
 
         expected_fingerprint = str(raw_input("Enter master fingerprint: ")).upper()
         shares = []
