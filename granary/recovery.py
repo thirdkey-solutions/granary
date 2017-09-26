@@ -9,7 +9,7 @@ from bip32pathlib import BIP32Path
 
 def value_print(satoshi):
     return("%12d satoshi (%2.4f BTC)" % (satoshi, satoshi/float(10**8)))
-    
+
 def load_recovery(filename):
     if os.path.isfile(filename):
         in_f = open(filename, 'r')
@@ -17,7 +17,7 @@ def load_recovery(filename):
         return recovery_package
     else:
         raise Exception("Can't load recovery file %s" % filename)
-        
+
 def save_recovery(recovery_package, filename):
     if not os.path.isfile(filename):
         out_f = open(filename, 'w')
@@ -56,7 +56,7 @@ def normalize(recovery_package):
         norm_txs.append(tx)
     recovery_package['txs'] = norm_txs
     return recovery_package
-    
+
 def validate(recovery_package):
     package_out = 0
     total_out = 0
@@ -82,8 +82,8 @@ def validate(recovery_package):
                 tx_in += prev_out['value']
             except:
                 print "Exception in input retrieval - skipping online validation"
-                pass    
-                
+                pass
+
         for outp in tx['outs']:
             print "\tOutput paying " + value_print(outp['value']), "to", bitcoin.script_to_address(outp['script'])
             tx_out += outp['value']
@@ -107,20 +107,20 @@ def validate(recovery_package):
                 print "WARNING - Unusually large fee", value_print(total_fee)
             if total_fee > (total_out / 100):
                 raise Exception("ERROR - Fee exceeds 1% of Tx" + value_print(total_fee))
-        
+
     # check total outputs match expected amount
     print "\n\n=================================================="
     if total_in > 0:
-            print "Total inputs for all transactions", value_print(total_in)
+        print "Total inputs for all transactions", value_print(total_in)
     print "Total outputs for all transactions", value_print(total_out)
     if total_in > 0:
-            print "Total fees for all transactions", value_print(total_fee)
-    
+        print "Total fees for all transactions", value_print(total_fee)
+
     if total_out == recovery_package['header']['total_out']:
         print "\n\nTotal outputs for all transactions match the recovery package header"
     else:
         raise Exception("Total outputs for all transactions do not match the recovery package header")
-                
+
 def cosign(master_xpriv, recovery_package):
     raw_txs = recovery_package['txs']
     print "Signing %d transactions" % len(raw_txs)
@@ -143,7 +143,7 @@ def cosign(master_xpriv, recovery_package):
                     sigs.append(sig_new)
                     tx_new = bitcoin.apply_multisignatures(unhexlify(hex_tx), i, redeemScript, sigs)
                     print "Signed transaction %d input %d" % (tx_index, i)
-        
+
                     # replace tx with newly signed transaction
                     hex_tx = hexlify(tx_new)
         recovery_package['txs'][tx_index]['bytes'] = hex_tx
