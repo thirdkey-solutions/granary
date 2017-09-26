@@ -186,7 +186,7 @@ class SeedShell(Cmd):
         }
         key_text = json.dumps(key_json, sort_keys=True, indent=2)
         keyfile.write(key_text)
-        keyfile.close
+        keyfile.close()
         print key_text
         print "Data saved to ", keyfilename
 
@@ -325,7 +325,7 @@ class SeedShell(Cmd):
         }
         key_text = json.dumps(key_json, indent=2)
         keyfile.write(key_text)
-        keyfile.close
+        keyfile.close()
         print "Data saved to ", keyfilename
         print key_text
 
