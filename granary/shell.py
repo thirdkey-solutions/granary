@@ -379,6 +379,9 @@ class SeedShell(Cmd):
         else:
             return [f for f in files if f.startswith(text)]
 
+    def help_load_recovery(self):
+        print "load_recovery [PATH]"
+        print "Load a recovery JSON object"
 
     def do_cosign(self, args):
         if not self.seed:
