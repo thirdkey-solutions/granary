@@ -118,7 +118,7 @@ class SeedShell(Cmd):
 
         if self.master:
             if raw_input("Overwrite existing master? (y/N): ") not in ["y","Y"]:
-                raise Exception("aborting load. Keeping existing master seed %s" % self.master_fingerprint)
+                raise Exception("aborting load. Keeping existing master seed %s" % self.master.fingerprint())
 
         m = seedlib.regex_master_filename_fingerprint.search(filename)
         expected_fingerprint = m.groupdict()['fingerprint']
@@ -146,7 +146,7 @@ class SeedShell(Cmd):
     def do_master_from_shares(self, args):
         if self.master:
             if raw_input("Overwrite existing master? (y/N): ") not in ["y","Y"]:
-                raise Exception("aborting load. Keeping existing master seed %s" % self.master_fingerprint)
+                raise Exception("aborting load. Keeping existing master seed %s" % self.master.fingerprint())
 
         expected_fingerprint = str(raw_input("Enter master fingerprint: ")).upper()
         shares = []
@@ -186,7 +186,7 @@ class SeedShell(Cmd):
         }
         key_text = json.dumps(key_json, sort_keys=True, indent=2)
         keyfile.write(key_text)
-        keyfile.close
+        keyfile.close()
         print key_text
         print "Data saved to ", keyfilename
 
@@ -325,7 +325,7 @@ class SeedShell(Cmd):
         }
         key_text = json.dumps(key_json, indent=2)
         keyfile.write(key_text)
-        keyfile.close
+        keyfile.close()
         print "Data saved to ", keyfilename
         print key_text
 
@@ -379,6 +379,9 @@ class SeedShell(Cmd):
         else:
             return [f for f in files if f.startswith(text)]
 
+    def help_load_recovery(self):
+        print "load_recovery [PATH]"
+        print "Load a recovery JSON object"
 
     def do_cosign(self, args):
         if not self.seed:
